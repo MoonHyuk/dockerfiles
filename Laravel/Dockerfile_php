@@ -1,0 +1,38 @@
+﻿FROM composer:1.7 as build
+COPY database/ database/
+COPY composer.json composer.json
+COPY composer.lock composer.lock
+RUN composer install \
+    --ignore-platform-reqs \
+    --no-interaction \
+    --no-plugins \
+    --no-scripts \
+    --prefer-dist
+
+FROM php:7.2-fpm-stretch as compiled
+
+# ODBC 드라이버 설치
+ENV ACCEPT_EULA=Y
+
+RUN apt-get update && apt-get install -y gnupg
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get install -y --no-install-recommends apt-transport-https \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends msodbcsql17 unixodbc-dev
+
+# php mssql 드라이버 설치
+RUN pecl install sqlsrv pdo_sqlsrv \
+    && docker-php-ext-enable sqlsrv pdo_sqlsrv
+
+RUN docker-php-ext-install pdo_mysql
+
+FROM compiled
+WORKDIR /var/www/html
+COPY --from=build /app .
+COPY . .
+RUN chown -R www-data:www-data \
+        /var/www/html/storage \
+        /var/www/html/bootstrap/cache
+
+CMD [ "php-fpm" ]

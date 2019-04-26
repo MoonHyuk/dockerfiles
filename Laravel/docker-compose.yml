@@ -1,0 +1,33 @@
+version: "3.7"
+
+networks:
+  network:
+    driver: bridge
+
+services:
+  app:
+    image: saiptalk/backend_app:0.1
+    container_name: saiptalk_backend_app
+    build:
+      context: .
+      dockerfile: Dockerfile_php
+    working_dir: /var/www/html
+    volumes:
+      - /var/www/html/storage
+    env_file: '/home/saiptalk/backend-api/.env'
+    networks:
+      - network
+
+  nginx:
+    image: saiptalk/backend_nginx:0.1
+    container_name: saiptalk_backend_nginx
+    build:
+      context: .
+      dockerfile: Dockerfile_nginx
+    working_dir: /usr/share/nginx/html
+    networks:
+      - network
+    links:
+      - app
+    ports:
+      - 9001:80
