@@ -1,7 +1,8 @@
 FROM node:10.15-alpine as dev
 WORKDIR /app
-COPY . .
+COPY package.json package-lock.json ./
 RUN npm ci
+COPY . .
 
 FROM dev as build
 ARG MODE
