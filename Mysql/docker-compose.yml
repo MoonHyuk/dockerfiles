@@ -1,0 +1,25 @@
+version: "3.7"
+
+# See https://hub.docker.com/_/mysql
+volumes:
+  my_database_volume:
+
+networks:
+  network:
+    driver: bridge
+
+services:
+  mysql:
+    image: my_database
+    container_name: my_database
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - my_database_volume:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    env_file: '/home/my_database/.env'
+    ports:
+      - 3306:3306
+    networks:
+      - network
